@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>FSE Chat Room</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="/css/cover.css" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+    <!--[if lt IE 9]><script src="/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    <script src="/js/ie-emulation-modes-warning.js"></script>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+
+<div class="site-wrapper">
+
+    <div class="site-wrapper-inner">
+
+        <div class="room-container">
+            <div class="room-left">
+                <div class="room-left-header">
+                    <h3>FSE Chat Room</h3>
+                </div>
+                <div class="room-left-body" id="display">
+                </div>
+                <div class="room-left-footer">
+
+                    <div class="send-area">
+                        <textarea id="content" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="send-area">
+                        <button id="send" class="btn btn-primary pull-right">Send</button>
+                    </div>
+                </div>
+
+            </div>
+            <div class="room-right">
+                <div class="room-right-header" id="currentUser" name="<%= name %>">
+                    <h2>Nickname: <%= name %></h2>
+                    <button id="leave" class="btn btn-primary">Leave the room</button>
+                    <br>
+                    <br>
+                </div>
+                <div class="room-right-body">
+                    <h4>Online Users</h4>
+                    <ul class="list-group" id="users"></ul>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+</div>
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="/js/vendor/jquery.min.js"><\/script>')</script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/jquery.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io.connect();
+    var currentUser = document.getElementById('currentUser').getAttribute('name');
+    socket.on('connect', function() {
+        socket.emit('join', currentUser);
+    });
+    socket.on('system', function(user, state) {
+        var element = document.createElement('div');
+        element.innerHTML = user + ' ' + state +' the room'
+        var display = document.getElementById('display');
+        element.className = 'system';
+        display.appendChild(element);
+        display.scrollTop = display.scrollHeight;
+    });
+    socket.on('show history', function(history) {
+        for(i = 0; i < history.length; i++) {
+            var top = document.createElement('div');
+            top.innerHTML = history[i].username + ' @ ' + history[i].time;
+            var text = document.createElement('div');
+            text.innerHTML = history[i].content;
+            if(history[i].username == currentUser) {
+                top.className = 'bubble-right-top';
+                text.className = 'bubble-right';
+            }else {
+                top.className = 'bubble-left-top';
+                text.className = 'bubble-left'
+            }
+            var display = document.getElementById('display');
+            display.appendChild(top);
+            display.appendChild(text);
+            display.scrollTop = display.scrollHeight;
+        }
+    });
+    socket.on('chat', function(user, message, time) {
+        var top = document.createElement('div');
+        top.innerHTML = user + ' @ ' + time;
+        var text = document.createElement('div');
+        text.innerHTML = message;
+        if(user == currentUser) {
+            top.className = 'bubble-right-top';
+            text.className = 'bubble-right';
+        }else {
+            top.className = 'bubble-left-top';
+            text.className = 'bubble-left'
+        }
+        var display = document.getElementById('display');
+        display.appendChild(top);
+        display.appendChild(text);
+        display.scrollTop = display.scrollHeight;
+    });
+    socket.on('list user', function(userList) {
+        document.getElementById('users').innerHTML = '';
+        var list = document.getElementById('users');
+        for(i = 0; i < userList.length; i++) {
+            var html = document.createElement('li');
+            html.innerHTML = userList[i];
+            list.appendChild(html);
+        }
+    });
+
+    var buttonSend = document.getElementById('send');
+    buttonSend.onclick = function() {
+        var content = document.getElementById('content').value;
+        if(content) {
+            socket.emit('send', currentUser, content);
+        }
+        document.getElementById('content').value = '';
+    }
+
+    var buttonLeave = document.getElementById('leave');
+    buttonLeave.onclick = function() {
+        socket.emit('disconnect');
+        window.location = '/';
+    }
+</script>
+</body>
+</html>
