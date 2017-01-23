@@ -98,7 +98,6 @@ io.on('connection', function(socket) {
     });
     chatting.save(function(err, res) {
       if(err) return console.log(err);
-      console.log(res);
     });
     io.emit('chat', user, message, time);
   });
