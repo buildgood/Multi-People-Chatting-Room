@@ -8,12 +8,6 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/chat', function(req, res) {
-
-  // check valid
-  //   invalid render login
-  //   valid render chatting; check db
-  //   is render history
-  //   not save name
   var nickname = req.body.nickname;
   if(nickname) {
     user.push(nickname);

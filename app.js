@@ -76,13 +76,18 @@ io.on('connection', function(socket) {
   console.log('%s sockets connected', connections.length);
   socket.on('join', function(user) {
     socket.username = user;
-    users.push(user);
-    var messages = chatHistoryModel.find(function(err, list) {
-      if(err) return console.log(err);
-      socket.emit('show history', list);
-    });
-    io.emit('system', user, 'joins');
-    updateUser();
+    if(users.indexOf(user) != -1) {
+      socket.emit('login fail');
+    }else {
+      users.push(user);
+      var messages = chatHistoryModel.find(function(err, list) {
+          if(err) return console.log(err);
+          socket.emit('show history', list);
+      });
+      io.emit('system', user, 'joins');
+      updateUser();
+    }
+
   });
   socket.on('send', function(user, message) {
     var time = new Date(Date.now()).toLocaleString();
@@ -97,11 +102,13 @@ io.on('connection', function(socket) {
     });
     io.emit('chat', user, message, time);
   });
-  socket.on('disconnect', function() {
-    users.splice(users.indexOf(socket.username), 1);
-    connections.splice(connections.indexOf(socket), 1);
-    updateUser();
-    io.emit('system', socket.username, 'leaves');
+  socket.on('disconnect', function(info) {
+    if(info == "success") {
+      users.splice(users.indexOf(socket.username), 1);
+      connections.splice(connections.indexOf(socket), 1);
+      updateUser();
+      io.emit('system', socket.username, 'leaves');
+    }
   });
 
   function updateUser() {

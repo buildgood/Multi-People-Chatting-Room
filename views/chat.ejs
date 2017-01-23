@@ -88,6 +88,11 @@
     socket.on('connect', function() {
         socket.emit('join', currentUser);
     });
+    socket.on('login fail', function() {
+        alert("The nickname has already taken, choose another one.");
+        socket.emit('disconnect', "fail");
+        window.location = '/';
+    });
     socket.on('system', function(user, state) {
         var element = document.createElement('div');
         element.innerHTML = user + ' ' + state +' the room'
@@ -153,7 +158,7 @@
 
     var buttonLeave = document.getElementById('leave');
     buttonLeave.onclick = function() {
-        socket.emit('disconnect');
+        socket.emit('disconnect', "success");
         window.location = '/';
     }
 </script>
